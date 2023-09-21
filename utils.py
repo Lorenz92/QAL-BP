@@ -1063,9 +1063,9 @@ def plot_complexity():
 
 def plot_runtime(df):
     """
-    Generate a plot to visualize the Time to Solution (TTS) performance of QAL-BPP for different solvers.
+    Generate a plot to visualize the Time to Solution (TTS) performance of QAL-BP for different solvers.
 
-    This function creates a plot to illustrate the Time to Solution (TTS) performance of the QAL-BPP (Quantum Augmented Lagrangian
+    This function creates a plot to illustrate the Time to Solution (TTS) performance of the QAL-BP (Quantum Augmented Lagrangian
     for the Bin Packing Problem) solver for various problem instances. It compares the TTS results for different solvers,
     including Gurobi, Simulated Annealing (SA) with Augmented Lagrangian (AL), and Quantum Annealing (QA) with Augmented Lagrangian (AL).
 
@@ -1108,16 +1108,16 @@ def plot_runtime(df):
     plt.tick_params(labelsize=9)
     plt.xlabel('Number of items (n)', fontsize=font)
     plt.ylabel('Time to solution (TTS)', fontsize=font)
-    plt.title('Time performance of QAL-BPP in $\mu$s', fontsize=font + 2)
+    plt.title('Time performance of QAL-BP in $\mu$s', fontsize=font + 2)
     plt.savefig("tts.png")
     plt.show()
 
 
 def plot_runtime_logscale(df):
     """
-    Generate a log-scale plot to visualize the Time to Solution (TTS) performance of QAL-BPP for different solvers.
+    Generate a log-scale plot to visualize the Time to Solution (TTS) performance of QAL-BP for different solvers.
 
-    This function creates a log-scale plot to illustrate the Time to Solution (TTS) performance of the QAL-BPP (Quantum Augmented Lagrangian
+    This function creates a log-scale plot to illustrate the Time to Solution (TTS) performance of the QAL-BP (Quantum Augmented Lagrangian
     for the Bin Packing Problem) solver for various problem instances. It compares the TTS results for different solvers,
     including Gurobi, Simulated Annealing (SA) with Augmented Lagrangian (AL), Quantum Annealing (QA) with Augmented Lagrangian (AL),
     and an Exact Solver with Augmented Lagrangian (AL).
@@ -1164,7 +1164,7 @@ def plot_runtime_logscale(df):
     plt.tick_params(labelsize=9)
     plt.xlabel('Number of items (n)', fontsize=9)
     plt.ylabel('Time to solution (TTS)', fontsize=9)
-    plt.title('Log time performance of QAL-BPP in $\mu$s', fontsize=11)
+    plt.title('Log time performance of QAL-BP in $\mu$s', fontsize=11)
     plt.savefig("tts_log.png")
     plt.show()
 
@@ -1585,6 +1585,6 @@ def plot_tts(df_mean_std_tts):
   plt.tick_params(labelsize=9)
   plt.xlabel('Number of items (n)', fontsize=9)
   plt.ylabel('Time to solution (TTS)', fontsize=9)
-  plt.title('Time to solution of QAL-BPP in $\mu$s', fontsize=11)
+  plt.title('Time to solution of QAL-BP in $\mu$s', fontsize=11)
   plt.savefig("tts.png")
   plt.show()
