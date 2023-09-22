@@ -10,8 +10,6 @@ This repository contains the code to reproduce the results presented in the pape
 
 [Usage](#use)
 
-[Experiments](#experiments)
-
 
 <a name="desc"></a>
 ## Description
