@@ -28,8 +28,8 @@ The code is organized in a single notebook where four different solvers are impl
 A brief description of them are as follows:
 - *Gurobi*: uses the [**Gurobi**](https://www.gurobi.com/) solver to solve the ILP formulation of the Bin Packing problem
 - *Quantum Annealing*: uses the [**D-Wave**](https://www.dwavesys.com/) quantum annealer to solve the input QUBO problem.
-- *Simulated Annealing*: uses the [**D-Wave**](https://www.dwavesys.com/) quantum annealer to solve the input QUBO problem.
-- *Exact Solver*: uses classical computing to solve the BILP formulation, to verify the results from the quantum approaches.
+- *Simulated Annealing*: uses the [**D-Wave**](https://www.dwavesys.com/) simulated annealer to solve the input QUBO problem.
+- *Exact Solver*: uses enumearion to solve the QUBO formulation.
 
 <a name="results"></a>
 ## Results
