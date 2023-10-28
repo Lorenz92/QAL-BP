@@ -926,7 +926,7 @@ def solve_QUBOs(df, models, solvers, num_reads, al_penalties, pp_penalties, al_g
     print(f'Set penalty as: {"Default" if al_penalties is None else al_penalties} for AL and {"Default" if pp_penalties is None else pp_penalties} for PP')
     
     for i, _ in df_temp.iterrows():
-        instance_name = df_temp.loc[i,'instance_name']
+        instance_name = df_temp.loc[i,'instance_name'] + '_' + str(df_temp.loc[i,'seed'])
         n = df_temp.loc[i,'n']
         UB = n.item()
         w = df_temp.loc[i,'w']
