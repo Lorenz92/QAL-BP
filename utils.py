@@ -983,7 +983,7 @@ def plot_num_bins(df_num_bins):
         df_num_bins (pd.DataFrame): A DataFrame containing data about the number of bins used by different solvers for each instance.
 
     """
-    mpl.rcParams['figure.dpi'] = 50 #300
+    mpl.rcParams['figure.dpi'] = config.dpi #50 #300
     N = 40
     ind = np.arange(N)  # the x locations for the groups
     width = 0.25        # the width of the bars
@@ -1606,7 +1606,7 @@ def plot_tts(df_mean_std_tts):
   plt.show()
 
 def plot_all_runtime_metrics(runtime_df):
-  mpl.rcParams['figure.dpi'] = 300
+  mpl.rcParams['figure.dpi'] = config.dpi
   plt.style.use(['science', 'nature'])
   font = 11
   runtime = [col for col in runtime_df.columns if '_mean' in col]
@@ -1657,12 +1657,13 @@ def plot_chain_breaks(chain_breaks_df):
   fig = plt.figure(figsize=(10, 5))
 
   ax = fig.add_subplot(111)
-  ax.bar(ind, chain_breaks_df['AL_QA_cbf'])#, color='royalblue', alpha=.9, width=1)
+  plt.grid(axis='y', alpha=0.5, zorder=1)
+  ax.bar(ind, chain_breaks_df['AL_QA_cbf'], zorder=3)#, color='royalblue', alpha=.9, width=1)
 
   plt.ylabel('Chain Break Frequency', fontsize=font)
   plt.xlabel('Instance', fontsize=font)
   ax.set_ylabel('Number of bins', fontsize=font)
-  ax.set_ylim(0, 1)
+  ax.set_ylim(0, np.max(chain_breaks_df['AL_QA_cbf'])+.01)
   ax.set_xticks(ind)
   ax.set_xticklabels('('+chain_breaks_df['instance_name'].apply(lambda x: x.split('_')[1])+','+chain_breaks_df['seed'].astype(str)+')', fontsize=font)
 
@@ -1677,16 +1678,16 @@ def plot_chain_breaks(chain_breaks_df):
   plt.gcf().subplots_adjust(left=margin, right=1. - margin)
   plt.gcf().set_size_inches(s, plt.gcf().get_size_inches()[1])
   plt.tight_layout()
-
+  
   plt.savefig("chain_breaks_frequency.png")
   plt.show()
   return
 
 def plot_phys_log_qubits(logphys_df):
-  mpl.rcParams['figure.dpi'] = 300
+  mpl.rcParams['figure.dpi'] = config.dpi
   N = 40
   ind = np.arange(N)  # the x locations for the groups
-  width = 0.5        # the width of the bars
+  width = 0.45        # the width of the bars
   font = 11
 
   plt.style.use(['science', 'nature'])
