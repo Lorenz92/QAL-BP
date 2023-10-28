@@ -414,7 +414,7 @@ def generate_QUBO_pseudopoly(n, UB, w, c, penalties=None, gamma_term=False):
 
 
 
-def solve_model_SA(bqm, num_reads, model):
+def solve_model_SA(bqm, num_reads):
     """
     Solve a Binary Quadratic Model (BQM) using Simulated Annealing.
 
@@ -440,10 +440,11 @@ def solve_model_SA(bqm, num_reads, model):
     sampleset = sa.sample(bqm, seed=42, num_reads=num_reads, beta_range=(0.1, 100.0), beta_schedule_type='geometric')
     runtime = time.time() - start
 
-    return sampleset.first, (runtime / num_reads) * 1000000, sampleset
+    # return sampleset.first, (runtime / num_reads) * 1000000, sampleset
+    return sampleset.first, runtime * 1000000, sampleset
 
 
-def solve_model_QA(bqm, num_reads, model):
+def solve_model_QA(bqm, num_reads):
     """
     Solve a Binary Quadratic Model (BQM) using Quantum Annealing.
 
@@ -1001,7 +1002,7 @@ def plot_num_bins(df_num_bins):
     # Add labels and titles
     ax.set_ylabel('Number of bins', fontsize=font)
     ax.set_ylim(-0.1, 11)
-    ax.set_title('Comparison of the number of bins in solutions', fontsize=font + 2)
+    # ax.set_title('Comparison of the number of bins in solutions', fontsize=font + 2)
     ax.set_xticks(ind)
     ax.set_xticklabels('('+df_num_bins['instance_name'].apply(lambda x: x.split('_')[1])+','+df_num_bins['seed'].astype(str)+')', fontsize=font)
     plt.xticks(rotation=60)
@@ -1072,7 +1073,7 @@ def plot_complexity():
     plt.xticks(np.arange(0, 30, 5), fontsize=font)
     plt.yticks(np.arange(0, 1000, 100), fontsize=font)
     plt.tick_params(labelsize=9)
-    plt.title('Model complexity with respect to number of items and bin capacity', fontsize=font)
+    # plt.title('Model complexity with respect to number of items and bin capacity', fontsize=font)
     plt.savefig('num_vars_n.png')
     plt.show()
 
@@ -1124,7 +1125,7 @@ def plot_runtime(df):
     plt.tick_params(labelsize=9)
     plt.xlabel('Number of items (n)', fontsize=font)
     plt.ylabel('Time to solution (TTS)', fontsize=font)
-    plt.title('Time performance of QAL-BP in $\mu$s', fontsize=font + 2)
+    # plt.title('Time performance of QAL-BP in $\mu$s', fontsize=font + 2)
     plt.savefig("tts.png")
     plt.show()
 
@@ -1180,7 +1181,7 @@ def plot_runtime_logscale(df):
     plt.tick_params(labelsize=9)
     plt.xlabel('Number of items (n)', fontsize=9)
     plt.ylabel('Time to solution (TTS)', fontsize=9)
-    plt.title('Log time performance of QAL-BP in $\mu$s', fontsize=11)
+    # plt.title('Log time performance of QAL-BP in $\mu$s', fontsize=11)
     plt.savefig("tts_log.png")
     plt.show()
 
@@ -1214,7 +1215,7 @@ def plot_eigenval(df_eigen):
     ax.set_xlabel('Instance', fontsize=font)
     ax.set_ylim(-.1, 3)
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-    ax.set_title('Comparison of the energy of the best solution found by Simulated and Quantum solvers', fontsize=font+2)
+    # ax.set_title('Comparison of the energy of the best solution found by Simulated and Quantum solvers', fontsize=font+2)
     ax.set_xticks(ind)
     ax.set_xticklabels('('+df_eigen['instance_name'].apply(lambda x: x.split('_')[1])+','+df_eigen['seed'].astype(str)+')')
     plt.xticks(rotation=90)
@@ -1248,7 +1249,7 @@ def plot_feasibility_density(df_feasible_density):
 
     ax.set_ylabel('Probability', fontsize=font)
     ax.set_xlabel('Instance size', fontsize=font)
-    ax.set_title('Probability for the found minimum to be feasible', fontsize=font+2)
+    # ax.set_title('Probability for the found minimum to be feasible', fontsize=font+2)
     ax.set_xticks(ind + width / 2)
     ax.set_xticklabels(df_feasible_density.index.to_series().apply(lambda x: x.split('_')[1]), fontsize=font)
     plt.yticks(fontsize=font)
@@ -1321,7 +1322,7 @@ def plot_enumerate(results, title=None, first_feasible=None, save_fig=False):
     plt.bar(samples,energies)
     plt.xticks(rotation=90)
     plt.ylabel('Energy', fontsize=9)
-    plt.title(str(title), fontsize=12)
+    # plt.title(str(title), fontsize=12)
 
     if first_feasible is not None:
       plt.axhline(energies[first_feasible], color='darkred')
@@ -1364,7 +1365,7 @@ def plot_energies(results, title=None, first_feasible=None):
   plt.xticks(df.index.astype(str), df.index, rotation=90)
   plt.xlabel('Energy', fontsize=9)
   plt.ylabel('Probabilities', fontsize=9)
-  plt.title(str(title), fontsize=12)
+#   plt.title(str(title), fontsize=12)
   # print(energies[first_feasible])
   if first_feasible is not None:
     plt.axvline(df.index[first_feasible].astype(str), color='darkred')
@@ -1601,7 +1602,7 @@ def plot_tts(df_mean_std_tts):
   plt.tick_params(labelsize=9)
   plt.xlabel('Number of items (n)', fontsize=9)
   plt.ylabel('Time to solution (TTS)', fontsize=9)
-  plt.title('Time to solution of QAL-BP in $\mu$s', fontsize=11)
+#   plt.title('Time to solution of QAL-BP in $\mu$s', fontsize=11)
   plt.savefig("tts.png")
   plt.show()
 
