@@ -23,7 +23,6 @@ import dimod
 from dwave.system.samplers import DWaveSampler
 from dwave.system.composites import EmbeddingComposite
 from dwave.system import LazyFixedEmbeddingComposite
-from dwave.embedding import chain_break_frequency
 
 try:
   import google.colab
@@ -463,12 +462,11 @@ def solve_model_QA(bqm, num_reads, model):
         The function uses the D-Wave Quantum Annealing sampler via the EmbeddingComposite.
     """
     sampler = EmbeddingComposite(DWaveSampler(token=config.dimod_token))
-    sample_set = sampler.sample(bqm, num_reads=num_reads, return_embedding=True)
-#    embedding = sample_set.info['embedding_context']['embedding']
-    runtime = sample_set.info['timing']['qpu_sampling_time']
-    runtime_metrics = sample_set.info['timing']
 
-    return sample_set.first, runtime, sample_set, runtime_metrics
+    sample_set = sampler.sample(bqm, num_reads=num_reads)
+    runtime = sample_set.info['timing']['qpu_sampling_time']
+
+    return sample_set.first, runtime, sample_set
 
 
 def solve_model_Ex(bqm, model):
@@ -578,8 +576,8 @@ def solve_model(H, num_reads, solver: list):
 
     if 'QA' in solver:
         # Solving with Quantum Annealing
-        best_sample_QA, runtime_QA, sampleset_QA, runtime_metrics = solve_model_QA(bqm, num_reads, model)
-        sol['QA'] = {'best_sample': best_sample_QA, 'runtime': runtime_QA, 'sampleset': sampleset_QA, 'runtime_metrics': runtime_metrics}
+        best_sample_QA, runtime_QA, sampleset_QA = solve_model_QA(bqm, num_reads, model)
+        sol['QA'] = {'best_sample': best_sample_QA, 'runtime': runtime_QA, 'sampleset': sampleset_QA}
 
     return sol
 
@@ -730,10 +728,7 @@ def parse_solutions(solutions, weights, c, save_to_json, path, instance_name, pe
 
     for solver, results in solutions.items():
         parsed_solutions[solver] = {}
-        if solver == 'QA':
-          best_sample, runtime, sampleset, runtime_metrics = results.values()
-        else:
-          best_sample, runtime, sampleset = results.values()
+        best_sample, runtime, sampleset = results.values()
 
         # Save solutions to JSON files if requested
         if save_to_json:
@@ -781,10 +776,7 @@ def parse_solutions(solutions, weights, c, save_to_json, path, instance_name, pe
 
         # Include TTS in the result if computed
         if compute_tts:
-          d['TTS'] = tts
-
-        if solver == 'QA':
-          d['runtime_metrics'] = runtime_metrics
+            d['TTS'] = tts
 
         parsed_solutions[solver] = d
 
