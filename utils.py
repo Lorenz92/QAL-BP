@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 from collections import Counter
 import scienceplots
 import config as config
+from itertools import cycle
+
 
 
 # Dwaves
@@ -464,11 +466,14 @@ def solve_model_QA(bqm, num_reads, model):
     """
     sampler = EmbeddingComposite(DWaveSampler(token=config.dimod_token))
     sample_set = sampler.sample(bqm, num_reads=num_reads, return_embedding=True)
-#    embedding = sample_set.info['embedding_context']['embedding']
+    embedding = sample_set.info['embedding_context']['embedding']
+    cbf = sample_set.first.chain_break_fraction
+    logiqu = len(embedding.keys())
+    physiqu = sum(len(chain) for chain in embedding.values())
     runtime = sample_set.info['timing']['qpu_sampling_time']
     runtime_metrics = sample_set.info['timing']
 
-    return sample_set.first, runtime, sample_set, runtime_metrics
+    return sample_set.first, runtime, sample_set, runtime_metrics, cbf, logiqu, physiqu
 
 
 def solve_model_Ex(bqm, model):
@@ -578,8 +583,8 @@ def solve_model(H, num_reads, solver: list):
 
     if 'QA' in solver:
         # Solving with Quantum Annealing
-        best_sample_QA, runtime_QA, sampleset_QA, runtime_metrics = solve_model_QA(bqm, num_reads, model)
-        sol['QA'] = {'best_sample': best_sample_QA, 'runtime': runtime_QA, 'sampleset': sampleset_QA, 'runtime_metrics': runtime_metrics}
+        best_sample_QA, runtime_QA, sampleset_QA, runtime_metrics, cbf, logiqu, physiqu = solve_model_QA(bqm, num_reads, model)
+        sol['QA'] = {'best_sample': best_sample_QA, 'runtime': runtime_QA, 'sampleset': sampleset_QA, 'runtime_metrics': runtime_metrics, 'cbf': cbf, 'logiqu': logiqu, 'physiqu': physiqu}
 
     return sol
 
@@ -731,7 +736,7 @@ def parse_solutions(solutions, weights, c, save_to_json, path, instance_name, pe
     for solver, results in solutions.items():
         parsed_solutions[solver] = {}
         if solver == 'QA':
-          best_sample, runtime, sampleset, runtime_metrics = results.values()
+          best_sample, runtime, sampleset, runtime_metrics, cbf, logiqu, physiqu = results.values()
         else:
           best_sample, runtime, sampleset = results.values()
 
@@ -785,6 +790,9 @@ def parse_solutions(solutions, weights, c, save_to_json, path, instance_name, pe
 
         if solver == 'QA':
           d['runtime_metrics'] = runtime_metrics
+          d['cbf'] = cbf
+          d['logiqu'] = logiqu
+          d['physiqu'] = physiqu
 
         parsed_solutions[solver] = d
 
@@ -1596,3 +1604,121 @@ def plot_tts(df_mean_std_tts):
   plt.title('Time to solution of QAL-BP in $\mu$s', fontsize=11)
   plt.savefig("tts.png")
   plt.show()
+
+def plot_all_runtime_metrics(runtime_df):
+  mpl.rcParams['figure.dpi'] = 300
+  plt.style.use(['science', 'nature'])
+  font = 11
+  runtime = [col for col in runtime_df.columns if '_mean' in col]
+
+  # Legend labels for different solvers
+  leg = {
+      
+      'AL_QA_runtime_metrics_qpu_sampling_time_mean' : 'mean_qpu_sampling_time',
+      'AL_QA_runtime_metrics_qpu_anneal_time_per_sample_mean' : 'mean_qpu_anneal_time_per_sample',
+      'AL_QA_runtime_metrics_qpu_readout_time_per_sample_mean' : 'mean_qpu_readout_time_per_sample',
+      'AL_QA_runtime_metrics_qpu_access_time_mean' : 'mean_qpu_access_time',
+      'AL_QA_runtime_metrics_qpu_access_overhead_time_mean' : 'mean_qpu_access_overhead_time',
+      'AL_QA_runtime_metrics_qpu_programming_time_mean' : 'mean_qpu_programming_time',
+      'AL_QA_runtime_metrics_qpu_delay_time_per_sample_mean' : 'mean_qpu_delay_time_per_sample',
+      'AL_QA_runtime_metrics_total_post_processing_time_mean' : 'mean_total_post_processing_time',
+      'AL_QA_runtime_metrics_post_processing_overhead_time_mean' : 'mean_post_processing_overhead_time'
+  }
+
+  colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e', '#FF9e47', '#9e47FF']
+  lines = ["-","--","-.",":"]
+  linecycler = cycle(lines)
+
+  plt.figure(figsize=(10, 7))
+
+  # Plot runtime metrics
+  for i, r in enumerate(runtime):
+    plt.plot(runtime_df.loc[:, 'n'], runtime_df.loc[:, r], label=leg[r], linestyle=next(linecycler), color=colors[i])
+
+  plt.xlim(2, 11)
+  plt.grid(alpha=0.3)
+  plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+  plt.legend(fontsize=font)
+  plt.tick_params(labelsize=9)
+  plt.xlabel('Number of items (n)', fontsize=font)
+  plt.ylabel('Runtime in $\mu$s', fontsize=font)
+  plt.legend(fontsize=font, bbox_to_anchor=(1.01, .8), ncol=1)
+  plt.savefig("runtime_metrics.png")
+  plt.show()
+
+  return
+
+def plot_chain_breaks(chain_breaks_df):
+  N = 40
+  ind = np.arange(N)  # the x locations for the groups
+  # width = 0.35       # the width of the bars
+  plt.style.use(['science', 'nature'])
+  font = 11
+  fig = plt.figure(figsize=(10, 5))
+
+  ax = fig.add_subplot(111)
+  ax.bar(ind, chain_breaks_df['AL_QA_cbf'])#, color='royalblue', alpha=.9, width=1)
+
+  plt.ylabel('Chain Break Frequency', fontsize=font)
+  plt.xlabel('Instance', fontsize=font)
+  ax.set_ylabel('Number of bins', fontsize=font)
+  ax.set_ylim(0, 1)
+  ax.set_xticks(ind)
+  ax.set_xticklabels('('+chain_breaks_df['instance_name'].apply(lambda x: x.split('_')[1])+','+chain_breaks_df['seed'].astype(str)+')', fontsize=font)
+
+  plt.gca().margins(x=0.01)
+  plt.gcf().canvas.draw()
+  tl = plt.gca().get_xticklabels()
+  maxsize = max([t.get_window_extent().width for t in tl])
+  m = 0.2  # inch margin
+  s = maxsize / plt.gcf().dpi * N + 2 * m
+  margin = m / plt.gcf().get_size_inches()[0]
+
+  plt.gcf().subplots_adjust(left=margin, right=1. - margin)
+  plt.gcf().set_size_inches(s, plt.gcf().get_size_inches()[1])
+  plt.tight_layout()
+
+  plt.savefig("chain_breaks_frequency.png")
+  plt.show()
+  return
+
+def plot_phys_log_qubits(logphys_df):
+  mpl.rcParams['figure.dpi'] = 300
+  N = 40
+  ind = np.arange(N)  # the x locations for the groups
+  width = 0.5        # the width of the bars
+  font = 11
+
+  plt.style.use(['science', 'nature'])
+
+  fig = plt.figure(figsize=(12, 7))
+  ax = fig.add_subplot(111)
+  plt.grid(axis='y', alpha=0.5, zorder=1)
+  rects1 = ax.bar(ind, logphys_df['AL_QA_logiqu'], width, color='royalblue', zorder=3)
+  rects2 = ax.bar(ind + width, logphys_df['AL_QA_physiqu'], width, color='seagreen', zorder=3)
+
+  # Add labels and titles
+  ax.set_ylabel('Number of variables/qubits', fontsize=font)
+  # ax.set_ylim(-0.1, 11)
+  ax.set_xticks(ind + width/2)
+  ax.set_xticklabels('('+logphys_df['instance_name'].apply(lambda x: x.split('_')[1])+','+logphys_df['seed'].astype(str)+')', fontsize=font)
+  plt.xticks(rotation=0)
+  plt.yticks(fontsize=font)
+
+  plt.gca().margins(x=0.01)
+  plt.gcf().canvas.draw()
+  tl = plt.gca().get_xticklabels()
+  maxsize = max([t.get_window_extent().width for t in tl])
+  m = 0.2  # inch margin
+  s = maxsize / plt.gcf().dpi * N + 2 * m
+  margin = m / plt.gcf().get_size_inches()[0]
+
+  plt.gcf().subplots_adjust(left=margin, right=1. - margin)
+  plt.gcf().set_size_inches(s, plt.gcf().get_size_inches()[1])
+
+  ax.legend((rects1[0], rects2[0]), ('Logical variables', 'Physical qubits'), loc='upper left', fontsize=font)
+  plt.tight_layout()
+
+  plt.savefig("num_bins.png")
+  plt.show()
+  return
