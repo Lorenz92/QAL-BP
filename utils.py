@@ -1183,7 +1183,7 @@ def plot_runtime_logscale(df):
         plt.plot(df.loc[:, 'n'], upper_stock, color=config.color_scheme[color_link[r]], linestyle='dotted')
         plt.plot(df.loc[:, 'n'], lower_stock, color=config.color_scheme[color_link[r]], linestyle='dotted')
 
-    plt.fill_between(df.loc[:, 'n'], upper_stock, lower_stock, alpha=0.1)
+        plt.fill_between(df.loc[:, 'n'], upper_stock, lower_stock, alpha=0.1)
 
     plt.yscale('log')
     plt.ylim(0, 10 ** 12)
