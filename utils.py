@@ -579,12 +579,12 @@ def solve_model(H, num_reads, solver: list):
 
     if 'SA' in solver:
         # Solving with Simulated Annealing
-        best_sample_SA, runtime_SA, sampleset_SA = solve_model_SA(bqm, num_reads, model)
+        best_sample_SA, runtime_SA, sampleset_SA = solve_model_SA(bqm, num_reads)
         sol['SA'] = {'best_sample': best_sample_SA, 'runtime': runtime_SA, 'sampleset': sampleset_SA}
 
     if 'QA' in solver:
         # Solving with Quantum Annealing
-        best_sample_QA, runtime_QA, sampleset_QA, runtime_metrics, cbf, logiqu, physiqu = solve_model_QA(bqm, num_reads, model)
+        best_sample_QA, runtime_QA, sampleset_QA, runtime_metrics, cbf, logiqu, physiqu = solve_model_QA(bqm, num_reads)
         sol['QA'] = {'best_sample': best_sample_QA, 'runtime': runtime_QA, 'sampleset': sampleset_QA, 'runtime_metrics': runtime_metrics, 'cbf': cbf, 'logiqu': logiqu, 'physiqu': physiqu}
 
     return sol
@@ -984,7 +984,7 @@ def plot_num_bins(df_num_bins):
         df_num_bins (pd.DataFrame): A DataFrame containing data about the number of bins used by different solvers for each instance.
 
     """
-    mpl.rcParams['figure.dpi'] = config.dpi #50 #300
+    # mpl.rcParams['figure.dpi'] = config.dpi #50 #300
     N = 40
     ind = np.arange(N)  # the x locations for the groups
     width = 0.25        # the width of the bars
@@ -995,9 +995,9 @@ def plot_num_bins(df_num_bins):
     fig = plt.figure(figsize=(12, 7))
     ax = fig.add_subplot(111)
     plt.grid(axis='y', alpha=0.5, zorder=1)
-    rects1 = ax.bar(ind, df_num_bins['gurobi_n_bins'], width, color='royalblue', zorder=3)
-    rects2 = ax.bar(ind + width, df_num_bins['AL_SA_n_bins'], width, color='seagreen', zorder=3)
-    rects3 = ax.bar(ind - width, df_num_bins['AL_QA_n_bins'], width, color='red', zorder=3, alpha=0.8)
+    rects1 = ax.bar(ind, df_num_bins['gurobi_n_bins'], width, color=config.color_scheme['Gurobi'], zorder=3)
+    rects2 = ax.bar(ind + width, df_num_bins['AL_SA_n_bins'], width, color=config.color_scheme['SA'], zorder=3)
+    rects3 = ax.bar(ind - width, df_num_bins['AL_QA_n_bins'], width, color=config.color_scheme['QA'], zorder=3, alpha=0.8)
 
     # Add labels and titles
     ax.set_ylabel('Number of bins', fontsize=font)
@@ -1022,7 +1022,7 @@ def plot_num_bins(df_num_bins):
     ax.legend((rects1[0], rects2[0], rects3[0]), ('Gurobi', 'Simulated Annealing', 'Quantum Annealing'), loc='upper left', fontsize=font)
     plt.tight_layout()
 
-    plt.savefig("num_bins.png")
+    plt.savefig("num_bins.png", dpi=config.dpi)
     plt.show()
 
 
@@ -1037,7 +1037,7 @@ def plot_complexity():
     """
     plt.style.use(['science', 'nature'])
 
-    colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
+    # colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
 
     font = 11
     c = [10, 25, 50]
@@ -1058,10 +1058,10 @@ def plot_complexity():
     # Create the plot
     plt.figure(figsize=(6, 4.5))
 
-    plt.plot(nitem, pseudopol_10, label='Pseudo-Pol C=10', color=colors[0])
-    plt.plot(nitem, pseudopol_25, label='Pseudo-Pol C=25', color=colors[1])
-    plt.plot(nitem, pseudopol_50, label='Pseudo-Pol C=50', color=colors[2])
-    plt.plot(nitem, al, label='Augm. Lagrangian', color=colors[3])
+    plt.plot(nitem, pseudopol_10, label='Pseudo-Pol C=10', color=config.color_scheme['color6'])
+    plt.plot(nitem, pseudopol_25, label='Pseudo-Pol C=25', color=config.color_scheme['color7'])
+    plt.plot(nitem, pseudopol_50, label='Pseudo-Pol C=50', color=config.color_scheme['color8'])
+    plt.plot(nitem, al, label='Augm. Lagrangian', color=config.color_scheme['color9'])
     plt.axhline(180, color='darkred', linestyle='dotted')
 
     plt.xlabel(r'Number of items $(n)$', fontsize=font)
@@ -1074,7 +1074,7 @@ def plot_complexity():
     plt.yticks(np.arange(0, 1000, 100), fontsize=font)
     plt.tick_params(labelsize=9)
     # plt.title('Model complexity with respect to number of items and bin capacity', fontsize=font)
-    plt.savefig('num_vars_n.png')
+    plt.savefig('num_vars_n.png', dpi=config.dpi)
     plt.show()
 
 
@@ -1103,18 +1103,24 @@ def plot_runtime(df):
         'AL_QA_runtime_mean': 'Quantum Annealing - AL'
     }
 
-    colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
+    color_link = {
+        'gurobi_runtime_mean': 'Gurobi',
+        'AL_SA_runtime_mean': 'SA',
+        'AL_QA_runtime_mean': 'QA'
+    }
+
+    # colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
 
     plt.figure(figsize=(6, 4.5))
 
     # Plot TTS for different solvers
     for i, r in enumerate(runtime[:3]):
-        plt.plot(df.loc[:, 'n'], df.loc[:, r], color=colors[i], label=leg[r])
+        plt.plot(df.loc[:, 'n'], df.loc[:, r], color=config.color_scheme[color_link[r]], label=leg[r])
         r_std = f'{r[:-5]}_std'
         upper_stock = np.sum([np.round(df.loc[:, r], 0), np.round(df.loc[:, r_std], 0)], 0)
         lower_stock = np.sum([np.round(df.loc[:, r], 0), -np.round(df.loc[:, r_std], 0)], 0)
-        plt.plot(df.loc[:, 'n'], upper_stock, color=colors[i], linestyle='dotted')
-        plt.plot(df.loc[:, 'n'], lower_stock, color=colors[i], linestyle='dotted')
+        plt.plot(df.loc[:, 'n'], upper_stock, color=config.color_scheme[color_link[r]], linestyle='dotted')
+        plt.plot(df.loc[:, 'n'], lower_stock, color=config.color_scheme[color_link[r]], linestyle='dotted')
 
         plt.fill_between(df.loc[:, 'n'], upper_stock, lower_stock, alpha=0.1)
 
@@ -1126,7 +1132,7 @@ def plot_runtime(df):
     plt.xlabel('Number of items (n)', fontsize=font)
     plt.ylabel('Time to solution (TTS)', fontsize=font)
     # plt.title('Time performance of QAL-BP in $\mu$s', fontsize=font + 2)
-    plt.savefig("tts.png")
+    plt.savefig("tts.png", dpi=config.dpi)
     plt.show()
 
 
@@ -1156,19 +1162,26 @@ def plot_runtime_logscale(df):
         'AL_Ex_runtime_mean': 'Exact Solver - AL'
     }
 
+    color_link = {
+        'gurobi_runtime_mean': 'Gurobi',
+        'AL_SA_runtime_mean': 'SA',
+        'AL_QA_runtime_mean': 'QA',
+        'AL_Ex_runtime_mean': 'Ex'
+    }
+
     # Define custom colors for the plot
-    colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
+    # colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
 
     font = 14
     plt.figure(figsize=(6, 4.5))
 
     for i, r in enumerate(runtime[:4]):
-        plt.plot(df.loc[:, 'n'], df.loc[:, r], color=colors[i], label=leg[r])
+        plt.plot(df.loc[:, 'n'], df.loc[:, r], color=config.color_scheme[color_link[r]], label=leg[r])
         r_std = f'{r[:-5]}_std'
         upper_stock = np.sum([np.round(df.loc[:, r], 0), np.round(df.loc[:, r_std], 0)], 0)
         lower_stock = np.sum([np.round(df.loc[:, r], 0), -np.round(df.loc[:, r_std], 0)], 0)
-        plt.plot(df.loc[:, 'n'], upper_stock, color=colors[i], linestyle='dotted')
-        plt.plot(df.loc[:, 'n'], lower_stock, color=colors[i], linestyle='dotted')
+        plt.plot(df.loc[:, 'n'], upper_stock, color=config.color_scheme[color_link[r]], linestyle='dotted')
+        plt.plot(df.loc[:, 'n'], lower_stock, color=config.color_scheme[color_link[r]], linestyle='dotted')
 
     plt.fill_between(df.loc[:, 'n'], upper_stock, lower_stock, alpha=0.1)
 
@@ -1182,7 +1195,7 @@ def plot_runtime_logscale(df):
     plt.xlabel('Number of items (n)', fontsize=9)
     plt.ylabel('Time to solution (TTS)', fontsize=9)
     # plt.title('Log time performance of QAL-BP in $\mu$s', fontsize=11)
-    plt.savefig("tts_log.png")
+    plt.savefig("tts_log.png", dpi=config.dpi)
     plt.show()
 
 
@@ -1208,8 +1221,8 @@ def plot_eigenval(df_eigen):
 
     fig = plt.figure(figsize=(12, 5))
     ax = fig.add_subplot(111)
-    rects1 = ax.bar(ind - width / 2, df_eigen['AL_SA_min_eigenvalue'], width, color='royalblue')
-    rects2 = ax.bar(ind + width / 2, df_eigen['AL_QA_min_eigenvalue'], width, color='seagreen')
+    rects1 = ax.bar(ind - width / 2, df_eigen['AL_SA_min_eigenvalue'], width, color=config.color_scheme['SA'])
+    rects2 = ax.bar(ind + width / 2, df_eigen['AL_QA_min_eigenvalue'], width, color=config.color_scheme['QA'])
 
     ax.set_ylabel('Energy', fontsize=font)
     ax.set_xlabel('Instance', fontsize=font)
@@ -1222,7 +1235,7 @@ def plot_eigenval(df_eigen):
     ax.legend((rects1[0], rects2[0]), ('Simulated Annealing', 'Quantum Annealing'), fontsize=font)
     plt.tight_layout()
     plt.grid(axis='y')
-    plt.savefig("minimum_eigenvals.png")
+    plt.savefig("minimum_eigenvals.png", dpi=config.dpi)
     plt.show()
 
 
@@ -1244,8 +1257,8 @@ def plot_feasibility_density(df_feasible_density):
     font = 11
     fig = plt.figure(figsize=(10, 5))
     ax = fig.add_subplot(111)
-    rects1 = ax.bar(ind, df_feasible_density['AL_SA_feasible'], width, color='royalblue', alpha=.9)
-    rects2 = ax.bar(ind + width + 0.03, df_feasible_density['AL_QA_feasible'], width, color='seagreen', alpha=.9)
+    rects1 = ax.bar(ind, df_feasible_density['AL_SA_feasible'], width, color=config.color_scheme['SA'], alpha=.9)
+    rects2 = ax.bar(ind + width + 0.03, df_feasible_density['AL_QA_feasible'], width, color=config.color_scheme['QA'], alpha=.9)
 
     ax.set_ylabel('Probability', fontsize=font)
     ax.set_xlabel('Instance size', fontsize=font)
@@ -1256,7 +1269,7 @@ def plot_feasibility_density(df_feasible_density):
     plt.xticks(rotation=0)
     ax.legend((rects1[0], rects2[0]), ('Simulated Annealing', 'Quantum Annealing'), fontsize=font, bbox_to_anchor=(1.01, .8), ncol=1)
     plt.tight_layout()
-    plt.savefig("feasible_density.png")
+    plt.savefig("feasible_density.png", dpi=config.dpi)
     plt.show()
 
 
@@ -1328,7 +1341,7 @@ def plot_enumerate(results, title=None, first_feasible=None, save_fig=False):
       plt.axhline(energies[first_feasible], color='darkred')
 
     if save_fig:
-      plt.savefig('plot_enumerate.png', bbox_inches='tight', dpi =400)
+      plt.savefig('plot_enumerate.png', bbox_inches='tight', dpi=config.dpi)
     plt.show()
     return
 
@@ -1580,18 +1593,23 @@ def plot_tts(df_mean_std_tts):
       'AL_SA_TTS_mean': 'Simulated Annealing - AL',
       'AL_QA_TTS_mean': 'Quantum Annealing - AL'
   }
+  color_link = {
+      'gurobi_runtime_mean': 'Gurobi',
+      'AL_SA_TTS_mean': 'SA',
+      'AL_QA_TTS_mean': 'QA'
+  }
 
-  colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
+#   colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
 
   plt.figure(figsize=(6,4.5))
 
   for i, r in enumerate(runtime):
-    plt.plot(df_mean_std_tts.loc[:,'n'], df_mean_std_tts.loc[:,r], color=colors[i], label=leg[r] )
+    plt.plot(df_mean_std_tts.loc[:,'n'], df_mean_std_tts.loc[:,r], color=config.color_scheme[color_link[r]], label=leg[r] )
     r_std = r.replace("_mean", "_std" )
     upper_stock = np.sum([np.round(df_mean_std_tts.loc[:,r],0), np.round(df_mean_std_tts.loc[:,r_std],0)],0)
     lower_stock = np.sum([np.round(df_mean_std_tts.loc[:,r],0), -np.round(df_mean_std_tts.loc[:,r_std],0)],0)
-    plt.plot(df_mean_std_tts.loc[:,'n'], upper_stock, color=colors[i], linestyle = 'dotted')
-    plt.plot(df_mean_std_tts.loc[:,'n'], lower_stock, color=colors[i], linestyle = 'dotted')
+    plt.plot(df_mean_std_tts.loc[:,'n'], upper_stock, color=config.color_scheme[color_link[r]], linestyle = 'dotted')
+    plt.plot(df_mean_std_tts.loc[:,'n'], lower_stock, color=config.color_scheme[color_link[r]], linestyle = 'dotted')
 
     plt.fill_between(df_mean_std_tts.loc[:,'n'], upper_stock, lower_stock, alpha = .1)
 
@@ -1603,11 +1621,11 @@ def plot_tts(df_mean_std_tts):
   plt.xlabel('Number of items (n)', fontsize=9)
   plt.ylabel('Time to solution (TTS)', fontsize=9)
 #   plt.title('Time to solution of QAL-BP in $\mu$s', fontsize=11)
-  plt.savefig("tts.png")
+  plt.savefig("tts.png", dpi=config.dpi)
   plt.show()
 
 def plot_all_runtime_metrics(runtime_df):
-  mpl.rcParams['figure.dpi'] = config.dpi
+#   mpl.rcParams['figure.dpi'] = config.dpi
   plt.style.use(['science', 'nature'])
   font = 11
   runtime = [col for col in runtime_df.columns if '_mean' in col]
@@ -1626,7 +1644,7 @@ def plot_all_runtime_metrics(runtime_df):
       'AL_QA_runtime_metrics_post_processing_overhead_time_mean' : 'mean_post_processing_overhead_time'
   }
 
-  colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e', '#FF9e47', '#9e47FF']
+#   colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e', '#FF9e47', '#9e47FF']
   lines = ["-","--","-.",":"]
   linecycler = cycle(lines)
 
@@ -1634,7 +1652,7 @@ def plot_all_runtime_metrics(runtime_df):
 
   # Plot runtime metrics
   for i, r in enumerate(runtime):
-    plt.plot(runtime_df.loc[:, 'n'], runtime_df.loc[:, r], label=leg[r], linestyle=next(linecycler), color=colors[i])
+    plt.plot(runtime_df.loc[:, 'n'], runtime_df.loc[:, r], label=leg[r], linestyle=next(linecycler), color=config.color_scheme.values[i])
 
   plt.xlim(2, 11)
   plt.grid(alpha=0.3)
@@ -1644,7 +1662,7 @@ def plot_all_runtime_metrics(runtime_df):
   plt.xlabel('Number of items (n)', fontsize=font)
   plt.ylabel('Runtime in $\mu$s', fontsize=font)
   plt.legend(fontsize=font, bbox_to_anchor=(1.01, .8), ncol=1)
-  plt.savefig("runtime_metrics.png")
+  plt.savefig("runtime_metrics.png", dpi=config.dpi)
   plt.show()
 
   return
@@ -1680,12 +1698,12 @@ def plot_chain_breaks(chain_breaks_df):
   plt.gcf().set_size_inches(s, plt.gcf().get_size_inches()[1])
   plt.tight_layout()
   
-  plt.savefig("chain_breaks_frequency.png")
+  plt.savefig("chain_breaks_frequency.png", dpi=config.dpi)
   plt.show()
   return
 
 def plot_phys_log_qubits(logphys_df):
-  mpl.rcParams['figure.dpi'] = config.dpi
+#   mpl.rcParams['figure.dpi'] = config.dpi
   N = 40
   ind = np.arange(N)  # the x locations for the groups
   width = 0.45        # the width of the bars
@@ -1721,6 +1739,6 @@ def plot_phys_log_qubits(logphys_df):
   ax.legend((rects1[0], rects2[0]), ('Logical variables', 'Physical qubits'), loc='upper left', fontsize=font)
   plt.tight_layout()
 
-  plt.savefig("num_bins.png")
+  plt.savefig("num_bins.png", dpi=config.dpi)
   plt.show()
   return
