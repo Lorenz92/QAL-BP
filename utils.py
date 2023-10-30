@@ -18,14 +18,13 @@ import scienceplots
 import config as config
 from itertools import cycle
 
-
-
 # Dwaves
 import dimod
 from dwave.system.samplers import DWaveSampler
 from dwave.system.composites import EmbeddingComposite
 from dwave.system import LazyFixedEmbeddingComposite
 from dwave.embedding import chain_break_frequency
+from dwave.cloud import Client
 
 try:
   import google.colab
@@ -465,7 +464,10 @@ def solve_model_QA(bqm, num_reads):
     Note:
         The function uses the D-Wave Quantum Annealing sampler via the EmbeddingComposite.
     """
-    sampler = EmbeddingComposite(DWaveSampler(token=config.dimod_token))
+    
+    client = Client.from_config(token=config.dimod_token)    
+    # print(client.get_solvers())
+    sampler = EmbeddingComposite(DWaveSampler(token=config.dimod_token, solver='Advantage_system6.3'))
     sample_set = sampler.sample(bqm, num_reads=num_reads, return_embedding=True)
     embedding = sample_set.info['embedding_context']['embedding']
     cbf = sample_set.first.chain_break_fraction
