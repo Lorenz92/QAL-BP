@@ -1652,7 +1652,7 @@ def plot_all_runtime_metrics(runtime_df):
 
   # Plot runtime metrics
   for i, r in enumerate(runtime):
-    plt.plot(runtime_df.loc[:, 'n'], runtime_df.loc[:, r], label=leg[r], linestyle=next(linecycler), color=(config.color_scheme.values())[i])
+    plt.plot(runtime_df.loc[:, 'n'], runtime_df.loc[:, r], label=leg[r], linestyle=next(linecycler), color=list(config.color_scheme.values())[i])
 
   plt.xlim(2, 11)
   plt.grid(alpha=0.3)
