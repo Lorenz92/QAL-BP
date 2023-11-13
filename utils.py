@@ -467,7 +467,7 @@ def solve_model_QA(bqm, num_reads):
     
     client = Client.from_config(token=config.dimod_token)    
     # print(client.get_solvers())
-    sampler = EmbeddingComposite(DWaveSampler(token=config.dimod_token, solver='Advantage_system6.3'))
+    sampler = EmbeddingComposite(DWaveSampler(token=config.dimod_token, solver='Advantage_system4.1'))
     sample_set = sampler.sample(bqm, num_reads=num_reads, return_embedding=True)
     embedding = sample_set.info['embedding_context']['embedding']
     cbf = sample_set.first.chain_break_fraction
@@ -570,8 +570,9 @@ def solve_model(H, num_reads, solver: list):
 
     # Compile the model BQM to solve it with the desired solver
     model = H.compile()
+    start = time.time()
     bqm = model.to_bqm()
-
+    end = time.time() - start
     sol = {}
 
     if 'Ex' in solver:
@@ -587,7 +588,7 @@ def solve_model(H, num_reads, solver: list):
     if 'QA' in solver:
         # Solving with Quantum Annealing
         best_sample_QA, runtime_QA, sampleset_QA, runtime_metrics, cbf, logiqu, physiqu = solve_model_QA(bqm, num_reads)
-        sol['QA'] = {'best_sample': best_sample_QA, 'runtime': runtime_QA, 'sampleset': sampleset_QA, 'runtime_metrics': runtime_metrics, 'cbf': cbf, 'logiqu': logiqu, 'physiqu': physiqu}
+        sol['QA'] = {'best_sample': best_sample_QA, 'runtime': runtime_QA, 'sampleset': sampleset_QA, 'runtime_metrics': runtime_metrics, 'cbf': cbf, 'logiqu': logiqu, 'physiqu': physiqu, 'QUBO_time':end}
 
     return sol
 
@@ -739,7 +740,7 @@ def parse_solutions(solutions, weights, c, save_to_json, path, instance_name, pe
     for solver, results in solutions.items():
         parsed_solutions[solver] = {}
         if solver == 'QA':
-          best_sample, runtime, sampleset, runtime_metrics, cbf, logiqu, physiqu = results.values()
+          best_sample, runtime, sampleset, runtime_metrics, cbf, logiqu, physiqu, qubo_time = results.values()
         else:
           best_sample, runtime, sampleset = results.values()
 
@@ -796,6 +797,7 @@ def parse_solutions(solutions, weights, c, save_to_json, path, instance_name, pe
           d['cbf'] = cbf
           d['logiqu'] = logiqu
           d['physiqu'] = physiqu
+          d['qubo_time'] = qubo_time*1000000
 
         parsed_solutions[solver] = d
 
