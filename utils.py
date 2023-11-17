@@ -1173,10 +1173,6 @@ def plot_runtime_logscale(df):
         'AL_Ex_runtime_mean': 'Ex'
     }
 
-    # Define custom colors for the plot
-    # colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
-
-    font = 14
     plt.figure(figsize=(6, 4.5))
 
     for i, r in enumerate(runtime[:4]):
@@ -1645,11 +1641,12 @@ def plot_all_runtime_metrics(runtime_df):
       'AL_QA_runtime_metrics_qpu_programming_time_mean' : 'mean_qpu_programming_time',
       'AL_QA_runtime_metrics_qpu_delay_time_per_sample_mean' : 'mean_qpu_delay_time_per_sample',
       'AL_QA_runtime_metrics_total_post_processing_time_mean' : 'mean_total_post_processing_time',
-      'AL_QA_runtime_metrics_post_processing_overhead_time_mean' : 'mean_post_processing_overhead_time'
+      'AL_QA_runtime_metrics_post_processing_overhead_time_mean' : 'mean_post_processing_overhead_time',
+      'AL_QA_qubo_time_mean' : 'qubo_generation_time'
   }
 
 #   colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e', '#FF9e47', '#9e47FF']
-  lines = ["-","--","-.",":"]
+  lines = ["-","--","-.",":","-x-"]
   linecycler = cycle(lines)
 
   plt.figure(figsize=(10, 7))
@@ -1746,3 +1743,30 @@ def plot_phys_log_qubits(logphys_df):
   plt.savefig("num_bins.png", dpi=config.dpi)
   plt.show()
   return
+
+  
+def plot_feasibility_vs_cbf(df_feasible_density, df_mean_std_cbf_QA):
+  N = 8
+  ind = np.arange(N)  # the x locations for the groups
+  width = 0.35       # the width of the bars
+  plt.style.use(['science', 'nature'])
+  font = 11
+  fig = plt.figure(figsize=(10, 5))
+  ax = fig.add_subplot(111)
+  ax2 = ax.twinx()
+  rects1 = ax.bar(ind, df_feasible_density['AL_QA_feasible'], width, color=config.color_scheme['QA'], alpha=.9)
+  rects2 = ax2.bar(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'], width, color=config.color_scheme['SA'], alpha=.9)
+  ax2.errorbar(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'], df_mean_std_cbf_QA['AL_QA_cbf_std'], fmt='.', color='Black', elinewidth=2,capthick=1,errorevery=1, alpha=1, ms=4, capsize = 5)
+
+  ax.set_ylabel('Probability', fontsize=font)
+  ax.set_xlabel('Instance size', fontsize=font)
+  ax2.set_ylim(0, np.max(df_mean_std_cbf_QA['AL_QA_cbf_mean'] + df_mean_std_cbf_QA['AL_QA_cbf_std']+.01))
+  # ax.set_title('Probability for the found minimum to be feasible', fontsize=font+2)
+  ax.set_xticks(ind + width / 2)
+  ax.set_xticklabels(df_feasible_density.index.to_series().apply(lambda x: x.split('_')[1]), fontsize=font)
+  plt.yticks(fontsize=font)
+  plt.xticks(rotation=0)
+  ax.legend((rects1[0], rects2[0]), ('Quantum Annealing', 'Chain break frequency'), fontsize=font, bbox_to_anchor=(.65, .8), ncol=1)
+  plt.tight_layout()
+  plt.savefig("feasible_density.png", dpi=300)
+  plt.show()
