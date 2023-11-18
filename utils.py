@@ -914,7 +914,7 @@ def solve_QUBOs(df, models, solvers, num_reads, al_penalties, pp_penalties, al_g
     Solve QUBO optimization problems for given instances using specified models and solvers.
 
     This function takes a DataFrame containing bin packing problem instances and solves them using the specified optimization
-    models (Augmented Lagrangian - AL and Pseudo-Polynomial - PP) and solvers (e.g., QA, SA). It generates QUBO formulations
+    models (Augmented Lagrangian - QAL-BP and Pseudo-Polynomial - PP) and solvers (e.g., QA, SA). It generates QUBO formulations
     for each instance based on the selected models and penalties, solves them, and collects the results. Optionally, it can
     save the results to JSON files.
 
@@ -1005,6 +1005,7 @@ def plot_num_bins(df_num_bins):
 
     # Add labels and titles
     ax.set_ylabel('Number of bins', fontsize=font)
+    ax.set_xlabel('Instance', fontsize=font)
     ax.set_ylim(-0.1, 11)
     # ax.set_title('Comparison of the number of bins in solutions', fontsize=font + 2)
     ax.set_xticks(ind)
@@ -1041,9 +1042,6 @@ def plot_complexity():
     """
     plt.style.use(['science', 'nature'])
 
-    # colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
-
-    font = 11
     c = [10, 25, 50]
     pseudopol_10 = []
     pseudopol_25 = []
@@ -1068,14 +1066,14 @@ def plot_complexity():
     plt.plot(nitem, al, label='Augm. Lagrangian', color=config.color_scheme['color9'])
     plt.axhline(180, color='darkred', linestyle='dotted')
 
-    plt.xlabel(r'Number of items $(n)$', fontsize=font)
-    plt.ylabel('Number of variables', fontsize=font)
+    plt.xlabel('Instance size', fontsize=config.fontsize)
+    plt.ylabel('Number of variables', fontsize=config.fontsize)
     plt.ylim(-5, 250)
     plt.grid(alpha=0.3)
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-    plt.legend(fontsize=font)
-    plt.xticks(np.arange(0, 30, 5), fontsize=font)
-    plt.yticks(np.arange(0, 1000, 100), fontsize=font)
+    plt.legend(fontsize=config.fontsize)
+    plt.xticks(np.arange(0, 30, 5), fontsize=config.fontsize)
+    plt.yticks(np.arange(0, 1000, 100), fontsize=config.fontsize)
     plt.tick_params(labelsize=9)
     # plt.title('Model complexity with respect to number of items and bin capacity', fontsize=font)
     plt.savefig('num_vars_n.png', dpi=config.dpi)
@@ -1103,8 +1101,8 @@ def plot_runtime(df):
     # Legend labels for different solvers
     leg = {
         'gurobi_runtime_mean': 'Gurobi',
-        'AL_SA_runtime_mean': 'Simulated Annealing - AL',
-        'AL_QA_runtime_mean': 'Quantum Annealing - AL'
+        'AL_SA_runtime_mean': 'Simulated Annealing - QAL-BP',
+        'AL_QA_runtime_mean': 'Quantum Annealing - QAL-BP'
     }
 
     color_link = {
@@ -1131,10 +1129,10 @@ def plot_runtime(df):
     plt.xlim(2, 11)
     plt.grid(alpha=0.3)
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-    plt.legend(fontsize=font)
-    plt.tick_params(labelsize=9)
-    plt.xlabel('Number of items (n)', fontsize=font)
-    plt.ylabel('Time to solution (TTS)', fontsize=font)
+    plt.legend(fontsize=config.fontsize-2)
+    plt.tick_params(labelsize=config.fontsize)
+    plt.xlabel('Instance size', fontsize=config.fontsize)
+    plt.ylabel('Time to solution (TTS) in $\mu$s', fontsize=config.fontsize)
     # plt.title('Time performance of QAL-BP in $\mu$s', fontsize=font + 2)
     plt.savefig("tts.png", dpi=config.dpi)
     plt.show()
@@ -1161,9 +1159,9 @@ def plot_runtime_logscale(df):
     # Legend labels for different solvers
     leg = {
         'gurobi_runtime_mean': 'Gurobi',
-        'AL_SA_runtime_mean': 'Simulated Annealing - AL',
-        'AL_QA_runtime_mean': 'Quantum Annealing - AL',
-        'AL_Ex_runtime_mean': 'Exact Solver - AL'
+        'AL_SA_runtime_mean': 'Simulated Annealing - QAL-BP',
+        'AL_QA_runtime_mean': 'Quantum Annealing - QAL-BP',
+        'AL_Ex_runtime_mean': 'Exact Solver - QAL-BP'
     }
 
     color_link = {
@@ -1190,11 +1188,10 @@ def plot_runtime_logscale(df):
 
     plt.xlim(2, 11)
     plt.grid(alpha=0.3)
-    plt.legend(fontsize=9, bbox_to_anchor=(1.01, .8), ncol=1)
-    plt.tick_params(labelsize=9)
-    plt.xlabel('Number of items (n)', fontsize=9)
-    plt.ylabel('Time to solution (TTS)', fontsize=9)
-    # plt.title('Log time performance of QAL-BP in $\mu$s', fontsize=11)
+    plt.legend(fontsize=config.fontsize, bbox_to_anchor=(1.01, .8), ncol=1)
+    plt.tick_params(labelsize=config.fontsize-2)
+    plt.xlabel('Instance size', fontsize=config.fontsize)
+    plt.ylabel('Time to solution (TTS) in $\mu$s', fontsize=config.fontsize)
     plt.savefig("tts_log.png", dpi=config.dpi)
     plt.show()
 
@@ -1215,26 +1212,32 @@ def plot_eigenval(df_eigen):
     N = 40
     ind = np.arange(N)  # the x locations for the groups
     width = 0.25        # the width of the bars
-    font = 9
 
     plt.style.use(['science', 'nature'])
 
     fig = plt.figure(figsize=(12, 5))
-    ax = fig.add_subplot(111)
-    rects1 = ax.bar(ind - width / 2, df_eigen['AL_SA_min_eigenvalue'], width, color=config.color_scheme['SA'])
-    rects2 = ax.bar(ind + width / 2, df_eigen['AL_QA_min_eigenvalue'], width, color=config.color_scheme['QA'])
+    ax = fig.add_subplot(211)
+    ax2 = fig.add_subplot(212)
+    rects1 = ax.bar(ind - width / 2, df_eigen['AL_SA_min_eigenvalue'], width, color=config.color_scheme['SA'],zorder=1)
+    rects2 = ax.bar(ind + width / 2, df_eigen['AL_QA_min_eigenvalue'], width, color=config.color_scheme['QA'],zorder=1)
+    rects3 = ax2.bar(ind, df_eigen['AL_QA_cbf'], width*2, color=config.color_scheme['color11'], alpha=.5, zorder=-1)
+    
+    ax.set_ylabel('Energy', fontsize=config.fontsize)
+    ax2.set_ylabel('Chain breaks frequency', fontsize=config.fontsize)
+    ax2.set_xlabel('Instance', fontsize=config.fontsize)
+    ax.set_ylim(-.1, np.max(df_eigen['AL_QA_min_eigenvalue'])+.5)
+    ax2.set_ylim(-0.001, np.max(df_eigen['AL_QA_cbf'])+.01)
 
-    ax.set_ylabel('Energy', fontsize=font)
-    ax.set_xlabel('Instance', fontsize=font)
-    ax.set_ylim(-.1, 3)
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-    # ax.set_title('Comparison of the energy of the best solution found by Simulated and Quantum solvers', fontsize=font+2)
     ax.set_xticks(ind)
-    ax.set_xticklabels('('+df_eigen['instance_name'].apply(lambda x: x.split('_')[1])+','+df_eigen['seed'].astype(str)+')')
-    plt.xticks(rotation=90)
-    ax.legend((rects1[0], rects2[0]), ('Simulated Annealing', 'Quantum Annealing'), fontsize=font)
+    ax2.set_xticks(ind)
+    ax.set_xticklabels('('+df_eigen['instance_name'].apply(lambda x: x.split('_')[1])+','+df_eigen['seed'].astype(str)+')', rotation=90)
+    ax2.set_xticklabels('('+df_eigen['instance_name'].apply(lambda x: x.split('_')[1])+','+df_eigen['seed'].astype(str)+')', rotation=90)
+    ax2.legend((rects1[0], rects2[0], rects3[0]), ('Simulated Annealing', 'Quantum Annealing', 'QAL-BP Chain breaks frequency'), fontsize=config.fontsize, loc='upper center', bbox_to_anchor=(0.5, -.35), ncol=3)
+    # ax.legend((rects1[0], rects2[0]), ('Simulated Annealing', 'Quantum Annealing'), fontsize=config.fontsize)
     plt.tight_layout()
-    plt.grid(axis='y')
+    ax.grid(axis='y')
+    ax2.grid(axis='y')
     plt.savefig("minimum_eigenvals.png", dpi=config.dpi)
     plt.show()
 
@@ -1330,11 +1333,11 @@ def plot_enumerate(results, title=None, first_feasible=None, save_fig=False):
 
     else:
         samples = np.arange(len(energies))
-        plt.xlabel('Solutions', fontsize=9)
+        plt.xlabel('Solutions', fontsize=config.fontsize)
 
     plt.bar(samples,energies)
     plt.xticks(rotation=90)
-    plt.ylabel('Energy', fontsize=9)
+    plt.ylabel('Energy', fontsize=config.fontsize)
     # plt.title(str(title), fontsize=12)
 
     if first_feasible is not None:
@@ -1376,10 +1379,9 @@ def plot_energies(results, title=None, first_feasible=None):
 
   plt.bar(df.index.astype(str), df[0])
   plt.xticks(df.index.astype(str), df.index, rotation=90)
-  plt.xlabel('Energy', fontsize=9)
-  plt.ylabel('Probabilities', fontsize=9)
-#   plt.title(str(title), fontsize=12)
-  # print(energies[first_feasible])
+  plt.xlabel('Energy', fontsize=config.fontsize)
+  plt.ylabel('Probabilities', fontsize=config.fontsize)
+
   if first_feasible is not None:
     plt.axvline(df.index[first_feasible].astype(str), color='darkred')
   plt.show()
@@ -1590,8 +1592,8 @@ def plot_tts(df_mean_std_tts):
   runtime = [col for col in df_mean_std_tts.columns if '_mean' in col]
   leg = {
       'gurobi_runtime_mean': 'Gurobi',
-      'AL_SA_TTS_mean': 'Simulated Annealing - AL',
-      'AL_QA_TTS_mean': 'Quantum Annealing - AL'
+      'AL_SA_TTS_mean': 'Simulated Annealing - QAL-BP',
+      'AL_QA_TTS_mean': 'Quantum Annealing - QAL-BP'
   }
   color_link = {
       'gurobi_runtime_mean': 'Gurobi',
@@ -1616,10 +1618,10 @@ def plot_tts(df_mean_std_tts):
   plt.xlim(2, 11)
   plt.grid(alpha=0.3)
   plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-  plt.legend(fontsize=9)
+  plt.legend(fontsize=config.fontsize)
   plt.tick_params(labelsize=9)
-  plt.xlabel('Number of items (n)', fontsize=9)
-  plt.ylabel('Time to solution (TTS)', fontsize=9)
+  plt.xlabel('Instance size', fontsize=config.fontsize)
+  plt.ylabel('Time to solution (TTS) in $\mu$', fontsize=config.fontsize)
 #   plt.title('Time to solution of QAL-BP in $\mu$s', fontsize=11)
   plt.savefig("tts.png", dpi=config.dpi)
   plt.show()
@@ -1633,20 +1635,20 @@ def plot_all_runtime_metrics(runtime_df):
   # Legend labels for different solvers
   leg = {
       
-      'AL_QA_runtime_metrics_qpu_sampling_time_mean' : 'mean_qpu_sampling_time',
-      'AL_QA_runtime_metrics_qpu_anneal_time_per_sample_mean' : 'mean_qpu_anneal_time_per_sample',
-      'AL_QA_runtime_metrics_qpu_readout_time_per_sample_mean' : 'mean_qpu_readout_time_per_sample',
-      'AL_QA_runtime_metrics_qpu_access_time_mean' : 'mean_qpu_access_time',
-      'AL_QA_runtime_metrics_qpu_access_overhead_time_mean' : 'mean_qpu_access_overhead_time',
-      'AL_QA_runtime_metrics_qpu_programming_time_mean' : 'mean_qpu_programming_time',
-      'AL_QA_runtime_metrics_qpu_delay_time_per_sample_mean' : 'mean_qpu_delay_time_per_sample',
-      'AL_QA_runtime_metrics_total_post_processing_time_mean' : 'mean_total_post_processing_time',
-      'AL_QA_runtime_metrics_post_processing_overhead_time_mean' : 'mean_post_processing_overhead_time',
+      'AL_QA_runtime_metrics_qpu_sampling_time_mean' : 'sampling_time',
+      'AL_QA_runtime_metrics_qpu_anneal_time_per_sample_mean' : 'anneal_time_per_sample',
+      'AL_QA_runtime_metrics_qpu_readout_time_per_sample_mean' : 'readout_time_per_sample',
+      'AL_QA_runtime_metrics_qpu_access_time_mean' : 'access_time',
+      'AL_QA_runtime_metrics_qpu_access_overhead_time_mean' : 'access_overhead_time',
+      'AL_QA_runtime_metrics_qpu_programming_time_mean' : 'programming_time',
+      'AL_QA_runtime_metrics_qpu_delay_time_per_sample_mean' : 'delay_time_per_sample',
+      'AL_QA_runtime_metrics_total_post_processing_time_mean' : 'total_post_processing_time',
+      'AL_QA_runtime_metrics_post_processing_overhead_time_mean' : 'post_processing_overhead_time',
       'AL_QA_qubo_time_mean' : 'qubo_generation_time'
   }
 
 #   colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e', '#FF9e47', '#9e47FF']
-  lines = ["-","--","-.",":","-x-"]
+  lines = ["-","--","-.",":"]
   linecycler = cycle(lines)
 
   plt.figure(figsize=(10, 7))
@@ -1660,7 +1662,7 @@ def plot_all_runtime_metrics(runtime_df):
   plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
   plt.legend(fontsize=font)
   plt.tick_params(labelsize=9)
-  plt.xlabel('Number of items (n)', fontsize=font)
+  plt.xlabel('Instance size', fontsize=font)
   plt.ylabel('Runtime in $\mu$s', fontsize=font)
   plt.legend(fontsize=font, bbox_to_anchor=(1.01, .8), ncol=1)
   plt.savefig("runtime_metrics.png", dpi=config.dpi)
@@ -1720,6 +1722,7 @@ def plot_phys_log_qubits(logphys_df):
 
   # Add labels and titles
   ax.set_ylabel('Number of variables/qubits', fontsize=font)
+  ax.set_xlabel('Instance', fontsize=font)
   # ax.set_ylim(-0.1, 11)
   ax.set_xticks(ind + width/2)
   ax.set_xticklabels('('+logphys_df['instance_name'].apply(lambda x: x.split('_')[1])+','+logphys_df['seed'].astype(str)+')', fontsize=font)
@@ -1740,7 +1743,7 @@ def plot_phys_log_qubits(logphys_df):
   ax.legend((rects1[0], rects2[0]), ('Logical variables', 'Physical qubits'), loc='upper left', fontsize=font)
   plt.tight_layout()
 
-  plt.savefig("num_bins.png", dpi=config.dpi)
+  plt.savefig("qubits.png", dpi=config.dpi)
   plt.show()
   return
 
@@ -1754,19 +1757,22 @@ def plot_feasibility_vs_cbf(df_feasible_density, df_mean_std_cbf_QA):
   fig = plt.figure(figsize=(10, 5))
   ax = fig.add_subplot(111)
   ax2 = ax.twinx()
-  rects1 = ax.bar(ind, df_feasible_density['AL_QA_feasible'], width, color=config.color_scheme['QA'], alpha=.9)
-  rects2 = ax2.bar(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'], width, color=config.color_scheme['SA'], alpha=.9)
-  ax2.errorbar(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'], df_mean_std_cbf_QA['AL_QA_cbf_std'], fmt='.', color='Black', elinewidth=2,capthick=1,errorevery=1, alpha=1, ms=4, capsize = 5)
+  rects1 = ax.bar(ind + width + 0.03, df_feasible_density['AL_QA_feasible'], width, color=config.color_scheme['QA'], alpha=.9)
+  rects2 = ax.bar(ind, df_feasible_density['AL_SA_feasible'], width, color=config.color_scheme['SA'], alpha=.9)
+  line = ax2.plot(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'], width, color=config.color_scheme['color10'], alpha=1)
+  #ax2.errorbar(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'], df_mean_std_cbf_QA['AL_QA_cbf_std'], fmt='.', color=config.color_scheme['color10'], elinewidth=2,capthick=1,errorevery=1, alpha=.9, ms=4, capsize = 5)
+  ax2.fill_between(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'] + df_mean_std_cbf_QA['AL_QA_cbf_std'], df_mean_std_cbf_QA['AL_QA_cbf_mean'] - df_mean_std_cbf_QA['AL_QA_cbf_std'], alpha = .5)
 
-  ax.set_ylabel('Probability', fontsize=font)
+  ax.set_ylabel('Probability of feasible solution', fontsize=font)
   ax.set_xlabel('Instance size', fontsize=font)
+  ax2.set_ylabel('Chain Break Frequency', fontsize=font)
   ax2.set_ylim(0, np.max(df_mean_std_cbf_QA['AL_QA_cbf_mean'] + df_mean_std_cbf_QA['AL_QA_cbf_std']+.01))
-  # ax.set_title('Probability for the found minimum to be feasible', fontsize=font+2)
   ax.set_xticks(ind + width / 2)
   ax.set_xticklabels(df_feasible_density.index.to_series().apply(lambda x: x.split('_')[1]), fontsize=font)
-  plt.yticks(fontsize=font)
+  ax.tick_params(axis='x', labelsize=font)
+  ax2.tick_params(axis='x', labelsize=font)
   plt.xticks(rotation=0)
-  ax.legend((rects1[0], rects2[0]), ('Quantum Annealing', 'Chain break frequency'), fontsize=font, bbox_to_anchor=(.65, .8), ncol=1)
+  ax.legend((rects1[0], rects2[0], line[0]), ('Simulated Annealing', 'Quantum Annealing', 'Average QA chain break frequency'), fontsize=font, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3)
   plt.tight_layout()
-  plt.savefig("feasible_density.png", dpi=300)
+  plt.savefig("feasible_density_cbf.png", dpi=300)
   plt.show()
