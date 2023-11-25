@@ -1,30 +1,25 @@
-
-import matplotlib as mpl
 import pandas as pd
 import numpy as np
 import math
 from gurobipy import *
-import pyqubo
-from pyqubo import Array, Constraint, LogEncInteger, OneHotEncInteger
+from pyqubo import Array, Constraint
 import time
 import neal
 import json
 import collections.abc
 import os
-import copy
 import matplotlib.pyplot as plt
 from collections import Counter
 import scienceplots
 import config as config
 from itertools import cycle
+from functools import partial
 
 # Dwaves
 import dimod
 from dwave.system.samplers import DWaveSampler
 from dwave.system.composites import EmbeddingComposite
-from dwave.system import LazyFixedEmbeddingComposite
-from dwave.embedding import chain_break_frequency
-from dwave.cloud import Client
+from dwave.embedding.chain_strength import uniform_torque_compensation, scaled
 
 try:
   import google.colab
@@ -465,10 +460,21 @@ def solve_model_QA(bqm, num_reads):
         The function uses the D-Wave Quantum Annealing sampler via the EmbeddingComposite.
     """
     
-    client = Client.from_config(token=config.dimod_token)    
+    # client = Client.from_config(token=config.dimod_token) 
     # print(client.get_solvers())
     sampler = EmbeddingComposite(DWaveSampler(token=config.dimod_token, solver='Advantage_system4.1'))
-    sample_set = sampler.sample(bqm, num_reads=num_reads, return_embedding=True)
+    if config.chain_strength_param == 'uniform_torque_compensation':
+      print('uniform_torque_compensation')
+      chain_strength = partial(uniform_torque_compensation)#, prefactor=2)
+    elif config.chain_strength_param == 'scaled':
+      print('scaled')
+      chain_strength = partial(scaled)
+    else:
+      print(config.chain_strength_param)
+      chain_strength = config.chain_strength_param
+    
+    sample_set = sampler.sample(bqm, num_reads=num_reads, return_embedding=True, chain_strength=chain_strength)
+    chain_strength_sample = sample_set.info['embedding_context']['chain_strength']
     embedding = sample_set.info['embedding_context']['embedding']
     cbf = sample_set.first.chain_break_fraction
     logiqu = len(embedding.keys())
@@ -476,7 +482,7 @@ def solve_model_QA(bqm, num_reads):
     runtime = sample_set.info['timing']['qpu_sampling_time']
     runtime_metrics = sample_set.info['timing']
 
-    return sample_set.first, runtime, sample_set, runtime_metrics, cbf, logiqu, physiqu
+    return sample_set.first, runtime, sample_set, runtime_metrics, cbf, logiqu, physiqu, chain_strength_sample
 
 
 def solve_model_Ex(bqm, model):
@@ -587,8 +593,8 @@ def solve_model(H, num_reads, solver: list):
 
     if 'QA' in solver:
         # Solving with Quantum Annealing
-        best_sample_QA, runtime_QA, sampleset_QA, runtime_metrics, cbf, logiqu, physiqu = solve_model_QA(bqm, num_reads)
-        sol['QA'] = {'best_sample': best_sample_QA, 'runtime': runtime_QA, 'sampleset': sampleset_QA, 'runtime_metrics': runtime_metrics, 'cbf': cbf, 'logiqu': logiqu, 'physiqu': physiqu, 'QUBO_time':end}
+        best_sample_QA, runtime_QA, sampleset_QA, runtime_metrics, cbf, logiqu, physiqu, chain_strength_sample = solve_model_QA(bqm, num_reads)
+        sol['QA'] = {'best_sample': best_sample_QA, 'runtime': runtime_QA, 'sampleset': sampleset_QA, 'runtime_metrics': runtime_metrics, 'cbf': cbf, 'logiqu': logiqu, 'physiqu': physiqu, 'QUBO_time':end, 'chain_strength_sample': chain_strength_sample}
 
     return sol
 
@@ -740,7 +746,7 @@ def parse_solutions(solutions, weights, c, save_to_json, path, instance_name, pe
     for solver, results in solutions.items():
         parsed_solutions[solver] = {}
         if solver == 'QA':
-          best_sample, runtime, sampleset, runtime_metrics, cbf, logiqu, physiqu, qubo_time = results.values()
+          best_sample, runtime, sampleset, runtime_metrics, cbf, logiqu, physiqu, qubo_time, chain_strength_sample = results.values()
         else:
           best_sample, runtime, sampleset = results.values()
 
@@ -798,6 +804,8 @@ def parse_solutions(solutions, weights, c, save_to_json, path, instance_name, pe
           d['logiqu'] = logiqu
           d['physiqu'] = physiqu
           d['qubo_time'] = qubo_time*1000000
+          d['chain_strength_sample'] = chain_strength_sample
+          d['chain_strength_method'] = config.chain_strength_param
 
         parsed_solutions[solver] = d
 
@@ -1759,9 +1767,9 @@ def plot_feasibility_vs_cbf(df_feasible_density, df_mean_std_cbf_QA):
   ax2 = ax.twinx()
   rects1 = ax.bar(ind + width + 0.03, df_feasible_density['AL_QA_feasible'], width, color=config.color_scheme['QA'], alpha=.9)
   rects2 = ax.bar(ind, df_feasible_density['AL_SA_feasible'], width, color=config.color_scheme['SA'], alpha=.9)
-  line = ax2.plot(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'], width, color=config.color_scheme['color10'], alpha=1)
+  line = ax2.plot(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'], width, color=config.color_scheme['color11'], alpha=1, marker=".", markersize=10)
   #ax2.errorbar(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'], df_mean_std_cbf_QA['AL_QA_cbf_std'], fmt='.', color=config.color_scheme['color10'], elinewidth=2,capthick=1,errorevery=1, alpha=.9, ms=4, capsize = 5)
-  ax2.fill_between(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'] + df_mean_std_cbf_QA['AL_QA_cbf_std'], df_mean_std_cbf_QA['AL_QA_cbf_mean'] - df_mean_std_cbf_QA['AL_QA_cbf_std'], alpha = .5)
+  ax2.fill_between(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'] + df_mean_std_cbf_QA['AL_QA_cbf_std'], df_mean_std_cbf_QA['AL_QA_cbf_mean'] - df_mean_std_cbf_QA['AL_QA_cbf_std'], alpha = .5, color=config.color_scheme['color11'])
 
   ax.set_ylabel('Probability of feasible solution', fontsize=font)
   ax.set_xlabel('Instance size', fontsize=font)
@@ -1776,3 +1784,42 @@ def plot_feasibility_vs_cbf(df_feasible_density, df_mean_std_cbf_QA):
   plt.tight_layout()
   plt.savefig("feasible_density_cbf.png", dpi=300)
   plt.show()
+  
+def plot_energy_vs_chain_strength(runtime_df):
+#   mpl.rcParams['figure.dpi'] = config.dpi
+  plt.style.use(['science', 'nature'])
+  font = 11
+  runtime = [col for col in runtime_df.columns if '_eigenvalue' in col]
+  N = 40
+  ind = np.arange(N)
+
+  # Legend labels for different solvers
+  leg = {
+          '10' : 'constant_10',
+          '6' : 'constant_6',
+          'scaled' : 'scaled',
+          'compensation' : 'uniform_torque_compensation'
+  }
+
+  lines = ["-","--","-.",":"]
+  linecycler = cycle(lines)
+
+  plt.figure(figsize=(12, 7))
+
+  # Plot runtime metrics
+  for i, r in enumerate(runtime):
+    plt.plot(ind, runtime_df.loc[:, r], label=leg[r.split('_')[-1]], linestyle=next(linecycler), color=list(config.color_scheme.values())[i])
+
+
+  plt.xticks(ind, '('+runtime_df['instance_name'].apply(lambda x: x.split('_')[1])+','+runtime_df['seed_10'].astype(str)+')', fontsize=font, rotation=60)
+  plt.grid(alpha=0.3)
+  plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+  plt.legend(fontsize=font)
+  plt.tick_params(labelsize=9)
+  plt.xlabel('Instance', fontsize=font)
+  plt.ylabel('Best Solution Energy', fontsize=font)
+  plt.legend(fontsize=font, loc='upper center', bbox_to_anchor=(0.5, -.15), ncol=4)
+  plt.savefig("energy_vs_chain_strength.png", dpi=config.dpi)
+  plt.show()
+
+  return
