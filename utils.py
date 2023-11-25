@@ -1037,6 +1037,7 @@ def plot_num_bins(df_num_bins):
 
     plt.savefig("num_bins.png", dpi=config.dpi)
     plt.show()
+    return
 
 
 def plot_complexity():
@@ -1086,6 +1087,7 @@ def plot_complexity():
     # plt.title('Model complexity with respect to number of items and bin capacity', fontsize=font)
     plt.savefig('num_vars_n.png', dpi=config.dpi)
     plt.show()
+    return
 
 
 def plot_runtime(df):
@@ -1103,7 +1105,6 @@ def plot_runtime(df):
     """
 
     plt.style.use(['science', 'nature'])
-    font = 11
     runtime = [col for col in df.columns if '_mean' in col]
 
     # Legend labels for different solvers
@@ -1144,6 +1145,7 @@ def plot_runtime(df):
     # plt.title('Time performance of QAL-BP in $\mu$s', fontsize=font + 2)
     plt.savefig("tts.png", dpi=config.dpi)
     plt.show()
+    return
 
 
 def plot_runtime_logscale(df):
@@ -1202,6 +1204,7 @@ def plot_runtime_logscale(df):
     plt.ylabel('Time to solution (TTS) in $\mu$s', fontsize=config.fontsize)
     plt.savefig("tts_log.png", dpi=config.dpi)
     plt.show()
+    return
 
 
 def plot_eigenval(df_eigen):
@@ -1248,6 +1251,7 @@ def plot_eigenval(df_eigen):
     ax2.grid(axis='y')
     plt.savefig("minimum_eigenvals.png", dpi=config.dpi)
     plt.show()
+    return
 
 
 def plot_feasibility_density(df_feasible_density):
@@ -1282,7 +1286,7 @@ def plot_feasibility_density(df_feasible_density):
     plt.tight_layout()
     plt.savefig("feasible_density.png", dpi=config.dpi)
     plt.show()
-
+    return
 
 def find_first_feasible(sampleset, weights, bin_capacity):
     """
@@ -1718,7 +1722,6 @@ def plot_phys_log_qubits(logphys_df):
   N = 40
   ind = np.arange(N)  # the x locations for the groups
   width = 0.45        # the width of the bars
-  font = 11
 
   plt.style.use(['science', 'nature'])
 
@@ -1729,13 +1732,13 @@ def plot_phys_log_qubits(logphys_df):
   rects2 = ax.bar(ind + width, logphys_df['AL_QA_physiqu'], width, color='seagreen', zorder=3)
 
   # Add labels and titles
-  ax.set_ylabel('Number of variables/qubits', fontsize=font)
-  ax.set_xlabel('Instance', fontsize=font)
+  ax.set_ylabel('Number of variables/qubits', fontsize=config.fontsize)
+  ax.set_xlabel('Instance', fontsize=config.fontsize)
   # ax.set_ylim(-0.1, 11)
   ax.set_xticks(ind + width/2)
-  ax.set_xticklabels('('+logphys_df['instance_name'].apply(lambda x: x.split('_')[1])+','+logphys_df['seed'].astype(str)+')', fontsize=font)
+  ax.set_xticklabels('('+logphys_df['instance_name'].apply(lambda x: x.split('_')[1])+','+logphys_df['seed'].astype(str)+')', fontsize=config.fontsize)
   plt.xticks(rotation=0)
-  plt.yticks(fontsize=font)
+  plt.yticks(fontsize=config.fontsize)
 
   plt.gca().margins(x=0.01)
   plt.gcf().canvas.draw()
@@ -1748,7 +1751,7 @@ def plot_phys_log_qubits(logphys_df):
   plt.gcf().subplots_adjust(left=margin, right=1. - margin)
   plt.gcf().set_size_inches(s, plt.gcf().get_size_inches()[1])
 
-  ax.legend((rects1[0], rects2[0]), ('Logical variables', 'Physical qubits'), loc='upper left', fontsize=font)
+  ax.legend((rects1[0], rects2[0]), ('Logical variables', 'Physical qubits'), loc='upper left', fontsize=config.fontsize)
   plt.tight_layout()
 
   plt.savefig("qubits.png", dpi=config.dpi)
@@ -1771,24 +1774,24 @@ def plot_feasibility_vs_cbf(df_feasible_density, df_mean_std_cbf_QA):
   #ax2.errorbar(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'], df_mean_std_cbf_QA['AL_QA_cbf_std'], fmt='.', color=config.color_scheme['color10'], elinewidth=2,capthick=1,errorevery=1, alpha=.9, ms=4, capsize = 5)
   ax2.fill_between(ind + width + 0.03, df_mean_std_cbf_QA['AL_QA_cbf_mean'] + df_mean_std_cbf_QA['AL_QA_cbf_std'], df_mean_std_cbf_QA['AL_QA_cbf_mean'] - df_mean_std_cbf_QA['AL_QA_cbf_std'], alpha = .5, color=config.color_scheme['color11'])
 
-  ax.set_ylabel('Probability of feasible solution', fontsize=font)
-  ax.set_xlabel('Instance size', fontsize=font)
-  ax2.set_ylabel('Chain Break Frequency', fontsize=font)
+  ax.set_ylabel('Probability of feasible solution', fontsize=config.fontsize)
+  ax.set_xlabel('Instance size', fontsize=config.fontsize)
+  ax2.set_ylabel('Chain Break Frequency', fontsize=config.fontsize)
   ax2.set_ylim(0, np.max(df_mean_std_cbf_QA['AL_QA_cbf_mean'] + df_mean_std_cbf_QA['AL_QA_cbf_std']+.01))
   ax.set_xticks(ind + width / 2)
-  ax.set_xticklabels(df_feasible_density.index.to_series().apply(lambda x: x.split('_')[1]), fontsize=font)
-  ax.tick_params(axis='x', labelsize=font)
-  ax2.tick_params(axis='x', labelsize=font)
+  ax.set_xticklabels(df_feasible_density.index.to_series().apply(lambda x: x.split('_')[1]), fontsize=config.fontsize)
+  ax.tick_params(axis='x', labelsize=config.fontsize)
+  ax2.tick_params(axis='x', labelsize=config.fontsize)
   plt.xticks(rotation=0)
-  ax.legend((rects1[0], rects2[0], line[0]), ('Simulated Annealing', 'Quantum Annealing', 'Average QA chain break frequency'), fontsize=font, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3)
+  ax.legend((rects1[0], rects2[0], line[0]), ('Simulated Annealing', 'Quantum Annealing', 'Average QA chain break frequency'), fontsize=config.fontsize, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3)
   plt.tight_layout()
   plt.savefig("feasible_density_cbf.png", dpi=300)
   plt.show()
+  return
   
 def plot_energy_vs_chain_strength(runtime_df):
 #   mpl.rcParams['figure.dpi'] = config.dpi
   plt.style.use(['science', 'nature'])
-  font = 11
   runtime = [col for col in runtime_df.columns if '_eigenvalue' in col]
   N = 40
   ind = np.arange(N)
@@ -1811,12 +1814,12 @@ def plot_energy_vs_chain_strength(runtime_df):
     plt.plot(ind, runtime_df.loc[:, r], label=leg[r.split('_')[-1]], linestyle=next(linecycler), color=list(config.color_scheme.values())[i])
 
 
-  plt.xticks(ind, '('+runtime_df['instance_name'].apply(lambda x: x.split('_')[1])+','+runtime_df['seed_10'].astype(str)+')', fontsize=font, rotation=60)
+  plt.xticks(ind, '('+runtime_df['instance_name'].apply(lambda x: x.split('_')[1])+','+runtime_df['seed_10'].astype(str)+')', fontsize=config.fontsize, rotation=60)
   plt.grid(alpha=0.3)
   plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-  plt.legend(fontsize=font)
+  plt.legend(fontsize=config.fontsize)
   plt.tick_params(labelsize=9)
-  plt.xlabel('Instance', fontsize=font)
+  plt.xlabel('Instance', fontsize=config.fontsize)
   plt.ylabel('Best Solution Energy', fontsize=font)
   plt.legend(fontsize=font, loc='upper center', bbox_to_anchor=(0.5, -.15), ncol=4)
   plt.savefig("energy_vs_chain_strength.png", dpi=config.dpi)
